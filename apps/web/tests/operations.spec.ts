@@ -38,18 +38,21 @@ test('sign in, persist records, run agents, ingest knowledge, approve a change a
     page.getByText('Change submitted for approval. Review it in Approvals.'),
   ).toBeVisible()
   await page.getByRole('link', { name: 'Approvals', exact: true }).click()
-  await page
+  const approval = page
     .locator('.approval-card')
     .filter({ hasText: `updated.${suffix}@example.com` })
-    .getByRole('button', { name: 'Approve action' })
-    .click()
+  const workflowPath = await approval
+    .getByRole('link', { name: 'Inspect workflow' })
+    .getAttribute('href')
+  expect(workflowPath).toBeTruthy()
+  await approval.getByRole('button', { name: 'Approve action' }).click()
   await page.getByRole('button', { name: 'Confirm decision' }).click()
-  await expect(
-    page
-      .locator('.approval-card')
-      .filter({ hasText: `updated.${suffix}@example.com` }),
-  ).toHaveCount(0, { timeout: 20000 })
+  await page.goto(workflowPath!)
+  await expect(page.locator('.run-summary')).toContainText('succeeded', {
+    timeout: 30000,
+  })
   await page.getByRole('link', { name: 'Customers', exact: true }).click()
+  await page.reload()
   await expect(
     page.getByText(`updated.${suffix}@example.com`, { exact: true }),
   ).toBeVisible({ timeout: 20000 })
