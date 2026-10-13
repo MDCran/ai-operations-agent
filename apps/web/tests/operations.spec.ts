@@ -91,7 +91,9 @@ test('sign in, persist records, run agents, ingest knowledge, approve a change a
   )
   await page.getByRole('link', { name: 'Support tickets', exact: true }).click()
   await expect(
-    page.getByRole('button', { name: `Follow up invoice ${suffix}` }),
+    page.locator('.record-title').filter({
+      hasText: `Follow up invoice ${suffix}`,
+    }),
   ).toBeVisible()
   await page.getByRole('link', { name: 'Appointments', exact: true }).click()
   await page.getByRole('button', { name: 'Add appointment' }).click()
