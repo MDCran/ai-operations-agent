@@ -5,6 +5,7 @@ import {
   Activity,
   BarChart3,
   Bot,
+  BriefcaseBusiness,
   CalendarDays,
   CheckSquare,
   ChevronDown,
@@ -19,6 +20,7 @@ import {
   ShieldCheck,
   Sun,
   Users,
+  Workflow,
   X,
 } from 'lucide-react'
 import { api, setCsrf, write, ApiError } from './services/api'
@@ -82,9 +84,9 @@ export function App() {
       ],
     },
     {
-      title: 'AI workspace',
+      title: 'Automation',
       items: [
-        ['/playground', 'Agent playground', Bot],
+        ['/playground', 'Workflow studio', Workflow],
         ['/runs', 'Runs & workflows', Activity],
         ...(writable ? [['/approvals', 'Approvals', ShieldCheck]] : []),
       ],
@@ -121,10 +123,10 @@ export function App() {
         <aside className={`sidebar ${mobileOpen ? 'mobile-open' : ''}`}>
           <div className="brand">
             <span className="brand-mark">
-              <Bot size={22} />
+              <BriefcaseBusiness size={21} />
             </span>
             <div>
-              Operations Agent<small>AI BUSINESS WORKSPACE</small>
+              Operations Desk<small>BUSINESS WORKSPACE</small>
             </div>
             <button
               className="mobile-close"
@@ -294,8 +296,8 @@ export function App() {
             </Routes>
           </main>
           <footer>
-            AI Operations Agent{' '}
-            <span>Intelligent business operations, with you in control.</span>
+            Operations Desk{' '}
+            <span>Your team’s work, in one place.</span>
           </footer>
         </div>
       </div>

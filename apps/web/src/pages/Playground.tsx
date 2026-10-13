@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Bot,
   Plus,
   Send,
   FileText,
@@ -91,9 +90,9 @@ export function Playground({ writable }: { writable: boolean }) {
   return (
     <>
       <Header
-        eyebrow="AI WORKSPACE"
-        title="Agent playground"
-        description="Ask, act and inspect. Your agents work through authorized business tools."
+        eyebrow="AUTOMATION"
+        title="Workflow studio"
+        description="Start a conversation, hand off routine work, and review every action."
         action={
           <Badge>
             {settings.data?.provider === 'demo'
@@ -138,7 +137,7 @@ export function Playground({ writable }: { writable: boolean }) {
         <section className="chat-panel">
           <div className="chat-heading">
             <div className="activity-icon">
-              <Bot size={20} />
+              <Workflow size={20} />
             </div>
             <div>
               <strong>Operations supervisor</strong>
@@ -152,7 +151,7 @@ export function Playground({ writable }: { writable: boolean }) {
             ) : !messages.data?.messages.length && !optimistic ? (
               <div className="chat-welcome">
                 <span className="welcome-icon">
-                  <Bot size={32} />
+                  <Workflow size={32} />
                 </span>
                 <h2>What can we get done?</h2>
                 <p>
@@ -195,11 +194,11 @@ export function Playground({ writable }: { writable: boolean }) {
                   className={`message message-${message.role}`}
                 >
                   <div className="message-avatar">
-                    {message.role === 'user' ? 'You' : <Bot size={18} />}
+                    {message.role === 'user' ? 'You' : <Workflow size={18} />}
                   </div>
                   <div className="message-body">
                     <strong>
-                      {message.role === 'user' ? 'You' : 'Operations Agent'}
+                      {message.role === 'user' ? 'You' : 'Operations assistant'}
                     </strong>
                     <div className="prose">
                       <ReactMarkdown>{message.content}</ReactMarkdown>
@@ -258,7 +257,7 @@ export function Playground({ writable }: { writable: boolean }) {
             )}
             {busy && (
               <div className="working">
-                <span className="online-dot" /> Agent workflow is running…
+                <span className="online-dot" /> Workflow in progress…
               </div>
             )}
             {error !== undefined && <ErrorState error={error} />}

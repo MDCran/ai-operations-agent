@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Bot, ShieldCheck } from 'lucide-react'
+import { BriefcaseBusiness, ShieldCheck } from 'lucide-react'
 import { write, setCsrf } from '../services/api'
 import { Button } from '../components/ui/button'
 import { ErrorState } from '../components/shared'
@@ -24,20 +24,20 @@ export function Login({ onSuccess }: { onSuccess: () => void }) {
       <div className="login-intro">
         <div className="brand">
           <span className="brand-mark">
-            <Bot size={23} />
+            <BriefcaseBusiness size={21} />
           </span>{' '}
-          Operations Agent
+          Operations Desk
         </div>
         <div>
-          <span className="eyebrow">INTELLIGENT BUSINESS OPERATIONS</span>
+          <span className="eyebrow">A BETTER WAY TO RUN THE DAY</span>
           <h1>
             Your team’s work.
             <br />
             One connected workspace.
           </h1>
           <p>
-            Knowledge, customer support and scheduling — coordinated by AI,
-            controlled by you.
+            Bring support, scheduling and company knowledge into one place.
+            Keep a person in control of every important action.
           </p>
           <div className="login-proof">
             <ShieldCheck size={20} />
@@ -46,7 +46,7 @@ export function Login({ onSuccess }: { onSuccess: () => void }) {
             </span>
           </div>
         </div>
-        <small>AI Operations Agent · Open source</small>
+        <small>Operations Desk · Open source</small>
       </div>
       <div className="login-form-wrap">
         <form

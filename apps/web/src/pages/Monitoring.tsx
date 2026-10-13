@@ -145,7 +145,7 @@ export function Monitoring({
     <>
       <Header
         eyebrow={audit ? 'ADMINISTRATION' : 'MONITORING'}
-        title={audit ? 'Audit logs' : 'Agent runs & workflows'}
+        title={audit ? 'Audit logs' : 'Runs & workflows'}
         description={
           audit
             ? 'An organization-scoped record of changes, actors and affected resources.'
@@ -159,7 +159,7 @@ export function Monitoring({
           <ErrorState error={query.error} />
         ) : !query.data.items.length ? (
           <Empty
-            title={audit ? 'No changes recorded yet' : 'No agent runs yet'}
+            title={audit ? 'No changes recorded yet' : 'No workflow runs yet'}
           />
         ) : (
           <>

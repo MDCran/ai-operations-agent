@@ -15,7 +15,7 @@ test('sign in, persist records, run agents, ingest knowledge, approve a change a
     .fill(process.env.DEMO_PASSWORD || 'change-this-local-password')
   await page.getByRole('button', { name: 'Sign in', exact: true }).click()
   await expect(
-    page.getByRole('heading', { name: 'Operations overview' }),
+    page.getByRole('heading', { name: 'Today at a glance' }),
   ).toBeVisible()
   await page.getByRole('link', { name: 'Customers', exact: true }).click()
   await page.getByRole('button', { name: 'Add customer' }).click()
@@ -79,7 +79,7 @@ test('sign in, persist records, run agents, ingest knowledge, approve a change a
   await page.getByRole('button', { name: 'Search knowledge' }).click()
   await expect(page.locator('.search-results')).toContainText('30 days')
   await page
-    .getByRole('link', { name: 'Agent playground', exact: true })
+    .getByRole('link', { name: 'Workflow studio', exact: true })
     .click()
   await page
     .getByLabel('Message', { exact: true })
@@ -141,7 +141,7 @@ test('sign in, persist records, run agents, ingest knowledge, approve a change a
   })
   await page.setViewportSize({ width: 390, height: 844 })
   await expect(
-    page.getByRole('heading', { name: 'Operations overview' }),
+    page.getByRole('heading', { name: 'Today at a glance' }),
   ).toBeVisible()
   await page.getByRole('button', { name: 'Open navigation' }).click()
   await page.getByRole('link', { name: 'Tasks', exact: true }).click()

@@ -6,8 +6,8 @@ import {
   LifeBuoy,
   CalendarDays,
   ShieldCheck,
-  Bot,
   Activity,
+  Workflow,
 } from 'lucide-react'
 import {
   Area,
@@ -44,9 +44,9 @@ export function Dashboard({ analytics = false }: { analytics?: boolean }) {
   const metrics = analytics
     ? [
         {
-          title: 'Agent runs',
+          title: 'Workflow runs',
           value: data.runs,
-          Icon: Bot,
+          Icon: Workflow,
           detail: `${data.failed_runs} failed runs`,
         },
         {
@@ -56,7 +56,7 @@ export function Dashboard({ analytics = false }: { analytics?: boolean }) {
           detail: 'Successful / all recorded runs',
         },
         {
-          title: 'Model tokens',
+          title: 'Tokens used',
           value: data.input_tokens + data.output_tokens,
           Icon: Activity,
           detail: `${data.input_tokens} input · ${data.output_tokens} output`,
@@ -103,17 +103,17 @@ export function Dashboard({ analytics = false }: { analytics?: boolean }) {
   return (
     <>
       <Header
-        eyebrow="YOUR OPERATIONS, CONNECTED"
-        title={analytics ? 'Agent analytics' : 'Operations overview'}
+        eyebrow="WORKSPACE SUMMARY"
+        title={analytics ? 'Workflow analytics' : 'Today at a glance'}
         description={
           analytics
-            ? 'Measured performance from your recorded agent executions.'
-            : 'A clear view of your business. Every number comes from your workspace.'
+            ? 'Run volume, outcomes, and usage across your workflows.'
+            : 'Customers, support, appointments, and the work moving between them.'
         }
         action={
           <Button asChild>
             <Link to="/playground">
-              <Bot size={17} /> Open agent workspace
+              <Workflow size={17} /> Start a workflow
             </Link>
           </Button>
         }
@@ -134,8 +134,8 @@ export function Dashboard({ analytics = false }: { analytics?: boolean }) {
         <section className="card">
           <div className="section-title">
             <div>
-              <h2>Agent execution activity</h2>
-              <p>Recorded runs over the last 14 days</p>
+              <h2>Workflow activity</h2>
+              <p>Runs recorded over the last 14 days</p>
             </div>
             <Badge>{`${data.runs} total`}</Badge>
           </div>
@@ -143,18 +143,37 @@ export function Dashboard({ analytics = false }: { analytics?: boolean }) {
             <div className="chart">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={data.run_trends}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <CartesianGrid
+                    stroke="var(--border)"
+                    strokeDasharray="3 3"
+                    vertical={false}
+                  />
                   <XAxis
                     dataKey="date"
                     tickFormatter={(v) => String(v).slice(5)}
+                    axisLine={{ stroke: 'var(--border)' }}
+                    tick={{ fill: 'var(--muted)' }}
                   />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
+                  <YAxis
+                    allowDecimals={false}
+                    axisLine={{ stroke: 'var(--border)' }}
+                    tick={{ fill: 'var(--muted)' }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'var(--surface)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 5,
+                      color: 'var(--text)',
+                    }}
+                    labelStyle={{ color: 'var(--text)' }}
+                    itemStyle={{ color: 'var(--accent)' }}
+                  />
                   <Area
                     type="monotone"
                     dataKey="runs"
-                    stroke="#6462e8"
-                    fill="#6462e8"
+                    stroke="var(--accent)"
+                    fill="var(--accent)"
                     fillOpacity={0.12}
                     strokeWidth={2}
                   />
@@ -162,8 +181,8 @@ export function Dashboard({ analytics = false }: { analytics?: boolean }) {
               </ResponsiveContainer>
             </div>
           ) : (
-            <Empty title="Your agent activity starts here">
-              Run a workflow in the playground to see execution trends.
+            <Empty title="Your workflow history starts here">
+              Run a workflow in the studio to see activity over time.
             </Empty>
           )}
         </section>
@@ -197,11 +216,11 @@ export function Dashboard({ analytics = false }: { analytics?: boolean }) {
       <section className="card">
         <div className="section-title">
           <div>
-            <h2>{analytics ? 'Tool usage' : 'Recent agent activity'}</h2>
+            <h2>{analytics ? 'Tool usage' : 'Recent workflows'}</h2>
             <p>
               {analytics
                 ? `Average recorded execution: ${data.average_latency_ms} ms`
-                : 'Follow handoffs, approvals and completed workflows'}
+                : 'Latest handoffs, approvals, and completed work'}
             </p>
           </div>
           <Link to="/runs" className="text-link">
@@ -226,7 +245,7 @@ export function Dashboard({ analytics = false }: { analytics?: boolean }) {
             {data.recent_activity.map((run) => (
               <Link to={`/runs/${run.id}`} key={run.id}>
                 <div className="activity-icon">
-                  <Bot size={19} />
+                  <Workflow size={19} />
                 </div>
                 <div>
                   <strong>{text(run.agent)} workflow</strong>
@@ -240,7 +259,7 @@ export function Dashboard({ analytics = false }: { analytics?: boolean }) {
             ))}
           </div>
         ) : (
-          <Empty title="Ready for your first workflow">
+          <Empty title="Nothing in motion yet">
             Ask a question, open a ticket or manage an appointment.
           </Empty>
         )}
