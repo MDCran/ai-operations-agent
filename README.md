@@ -17,15 +17,15 @@ This is a self-hosted portfolio project and a foundation for further development
 
 ## App screenshots
 
-These captures show the operations dashboard in both themes.
+These captures show the Operations Desk dashboard in both color themes.
 
 ### Light theme
 
-![AI operations dashboard in the light theme](docs/screenshots/dashboard.png)
+![Operations Desk dashboard in the light theme](docs/screenshots/dashboard.png)
 
 ### Dark theme
 
-![AI operations dashboard in the dark theme](docs/screenshots/dashboard-dark.png)
+![Operations Desk dashboard in the dark theme](docs/screenshots/dashboard-dark.png)
 
 ## Stack
 
