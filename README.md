@@ -1,144 +1,136 @@
-# AI Operations Agent
+# ai-operations-agent
 
-**Intelligent business operations powered by autonomous AI workflows.**
+[![CI](https://github.com/MDCran/ai-operations-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/MDCran/ai-operations-agent/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-5956d8)](LICENSE)
 
-[![CI](https://github.com/MDCran/ai-operations-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/MDCran/ai-operations-agent/actions/workflows/ci.yml)
-![MIT license](https://img.shields.io/badge/license-MIT-5956d8)
+An AI operations workspace for customer support, business knowledge, task management and appointment booking. LangGraph agents use validated business tools and pause protected changes for human approval before execution.
 
-A working operations platform built with React, FastAPI, LangChain, LangGraph and PostgreSQL. Agents retrieve company knowledge, create support tickets, manage customers and tasks, and book appointments through validated business tools. Protected actions pause for human approval and resume from durable checkpoints.
+This is a self-hosted portfolio project and a foundation for further development; it has not been independently audited for production readiness.
 
-This is a self-hosted portfolio application and a foundation for further product development. It is not a claim of independently audited production readiness.
+## Highlights
 
-![Operations dashboard, populated by browser-test records](docs/screenshots/dashboard.png)
+- Manage customers, support tickets, tasks and appointments in one responsive workspace.
+- Ingest PDF, DOCX, Markdown and text documents, then search with source citations.
+- Run persistent LangGraph workflows with resumable human approvals and audited tool calls.
+- Configure business hours, appointment types, team roles and approval policies.
+- Review workflow status, usage, analytics and audit events from the dashboard.
+- Run locally with a deterministic demo provider or configure OpenAI for live model calls.
 
-## Run locally
+## App screenshots
 
-Requires Docker with Compose. Ports 8080, 8000, 55432 and 56379 must be free. Database and Redis ports bind only to localhost.
+These captures show the operations dashboard in both themes.
 
-```sh
+### Light theme
+
+![AI operations dashboard in the light theme](docs/screenshots/dashboard.png)
+
+### Dark theme
+
+![AI operations dashboard in the dark theme](docs/screenshots/dashboard-dark.png)
+
+## Stack
+
+- **Frontend:** React 19, TypeScript, Vite, Tailwind CSS, TanStack Query, React Hook Form, Zod and Recharts.
+- **API:** Python 3.12, FastAPI, Pydantic 2 and SQLAlchemy 2.
+- **Agents:** LangChain and LangGraph, with PostgreSQL-backed workflow checkpoints.
+- **Data and jobs:** PostgreSQL with pgvector, Redis, Celery workers and a scheduler.
+- **Delivery:** Docker Compose, Alembic migrations and GitHub Actions.
+
+## Getting started
+
+Requirements: Docker with Compose. The app uses ports 8080 and 8000; PostgreSQL and Redis bind to localhost on ports 55432 and 56379.
+
+```powershell
 git clone https://github.com/MDCran/ai-operations-agent.git
 cd ai-operations-agent
-cp .env.example .env
-# On PowerShell: Copy-Item .env.example .env
-# Edit .env: replace POSTGRES_PASSWORD, its matching DATABASE_URL password, and DEMO_PASSWORD.
+Copy-Item .env.example .env
+```
+
+Edit `.env` and replace `POSTGRES_PASSWORD`, the matching password in `DATABASE_URL`, and `DEMO_PASSWORD`. Then start the services and create the demo owner:
+
+```powershell
 docker compose up --build -d
 docker compose run --rm api uv run --no-sync python -m app.db.seed
 ```
 
-Open **http://localhost:8080** and sign in with `DEMO_EMAIL` and `DEMO_PASSWORD` from your `.env`. The seed creates an owner, an organization, weekday hours and a 30-minute consultation type. Business records start empty. API documentation: **http://localhost:8000/docs**. Health: **http://localhost:8000/health**.
+Open [http://localhost:8080](http://localhost:8080) and sign in with `DEMO_EMAIL` and `DEMO_PASSWORD` from `.env`. The seed creates an owner, an organization, weekday hours and a 30-minute consultation type. Business records start empty. API documentation is at [http://localhost:8000/docs](http://localhost:8000/docs); health checks are at [http://localhost:8000/health](http://localhost:8000/health).
 
-The default local credentials in `.env.example` are for local evaluation only; use your own values. Demo seeding refuses to run with `ENVIRONMENT=production`. Never expose the local demo publicly with shared credentials.
+The example credentials are for local evaluation only. Choose your own values and never expose a demo environment with shared credentials. Seeding refuses to run with `ENVIRONMENT=production`.
 
-```sh
-docker compose logs --tail=100 api worker
-docker compose stop
-docker compose start
-```
+## Configuration
 
-PostgreSQL, Redis and uploaded files use named volumes; stopping the stack preserves them.
-
-## Try the workflows
-
-1. Create a customer in **Customers**. Edit the email, notes or status. The original record stays unchanged until an owner or admin reviews **Approvals**. The worker resumes the graph and records the write.
-2. Upload a TXT, Markdown, PDF or DOCX document in **Documents**. Wait for `ready`, then inspect passages in **Knowledge search** or ask the playground a question. Sources include real document/chunk identifiers and PDF page numbers when available.
-3. Enter `Create ticket: Invoice not received` or `Create task: Follow up with support` in the playground. Inspect the persisted record and **Runs & workflows**.
-4. Create an appointment by selecting a customer, appointment type, business date and available slot. Overlapping bookings are rejected by PostgreSQL, including concurrent requests. Cancellation requires approval.
-
-The offline **demo provider** implements explicit commands and deterministic lexical hash vectors. It does **not** pretend to be a language model or semantic embedding service. Ordinary questions use local document retrieval; free-form actions need OpenAI mode. Exact tool commands also work:
-
-```text
-List open tickets
-List tasks
-/tool search_customers {"query":"Acme"}
-/tool get_business_information {}
-/tool create_customer {"first_name":"Ada","email":"ada@example.com"}
-/tool check_appointment_availability {"date":"2030-01-02","appointment_type_id":"YOUR_TYPE_ID"}
-```
-
-Use actual IDs returned by your workspace. The validated tool catalog is available at `/api/v1/agents/tools`. The scheduling example date is illustrative; use a future business day.
-
-## Enable OpenAI
-
-Set these server-side environment values, then recreate services:
+The default `AI_PROVIDER=demo` supports explicit commands and deterministic local retrieval. It does not emulate a language model. To use OpenAI, set these server-side values in `.env`:
 
 ```dotenv
 AI_PROVIDER=openai
 OPENAI_API_KEY=your-server-side-key
-CHAT_MODEL=gpt-4.1-mini
-EMBEDDING_MODEL=text-embedding-3-small
 ```
 
-```sh
+The example file also provides `CHAT_MODEL` and `EMBEDDING_MODEL` settings. Recreate the API, worker and scheduler after changing provider settings:
+
+```powershell
 docker compose up -d --force-recreate api worker scheduler
 ```
 
-OpenAI mode uses structured Pydantic plans and answers through LangChain. A server-enforced tool allowlist, RBAC, tenant filters and deterministic approval gates remain authoritative. Model requests have timeouts and bounded retries. Re-upload demo documents after switching embedding providers; incompatible vectors are excluded from search. The schema uses 1536-dimensional embeddings.
+Re-upload documents after switching embedding providers because stored vectors may be incompatible. LangSmith tracing is off by default; review [privacy and retention](docs/privacy.md) before enabling external tracing.
 
-Optional LangSmith tracing uses the standard `LANGSMITH_TRACING`, `LANGSMITH_API_KEY` and `LANGSMITH_PROJECT` environment variables. It is off by default. Review [privacy and retention](docs/privacy.md) before enabling external traces. Model cost is reported only when both per-million token prices are configured; no hard-coded current pricing is assumed.
+## Workflows
 
-## What is implemented
+1. Create a customer in **Customers**. Changes to protected fields wait in **Approvals** until an owner or admin approves them.
+2. Upload a document in **Documents**, wait until it is ready, then inspect its passages in **Knowledge search** or ask the agent a question.
+3. Ask the playground to create a support ticket or task, then review the record and its workflow details.
+4. Book an appointment by choosing a customer, appointment type, business date and available time. The database rejects overlapping bookings, including concurrent requests.
 
-| Capability | Implementation |
-| --- | --- |
-| Agent orchestration | Supervisor and four role-scoped LangGraph nodes, typed plans, conditional routing, recorded steps |
-| Durable approvals | PostgreSQL checkpoints, `interrupt`, `Command(resume=...)`, 24-hour expiry, approval decisions and cancellation |
-| Exactly-once business effects | Transactional idempotency receipts and audits, per-run/per-key advisory locks, duplicate resume protection |
-| CRM, support and tasks | Real CRUD, search, filters, sorting, pagination, ticket assignment/comments, evidence-based response drafting |
-| Scheduling | UTC instants, IANA business time zone, configurable hours, availability, booking/rescheduling/cancellation, GiST exclusion constraint |
-| RAG | Background ingestion, typed retrieval, pgvector storage, tenant/metadata filters, similarity thresholds, citations and source inspection |
-| Workspace | Persistent conversations, event streaming, routing/tool inspector, approvals and failed-run retry |
-| Security | Argon2 passwords, expiring revocable sessions, HttpOnly cookies, CSRF tokens, origin checks, RBAC, Redis rate limits |
-| Observability | Stored run status, duration, token usage, tool counts, real dashboard aggregates, redacted audit metadata |
-| Dashboard | Responsive light/dark UI, Radix primitives, shadcn-style components, TanStack Query, accessible forms, real empty/error states |
-| Evaluation | Ten-case routing dataset and deterministic integration regressions; live provider harness available |
-| Deployment | Non-root container images, migrations, worker/scheduler, Compose, GitHub Actions, AWS task template and deployment guide |
+The demo provider recognizes explicit commands such as `List open tickets` and `/tool search_customers {"query":"Acme"}`. The validated tool catalog is available at `/api/v1/agents/tools`. Use real IDs returned by your workspace for commands that need them.
 
-SSE streams workflow progress and the completed answer. It does not simulate token streaming. Conversation context is bounded to twelve recent messages, each truncated to 1500 characters; there is no long-term semantic memory or automatic summarization pipeline yet.
+## Architecture
+
+| Area                       | Entry point                                                                                    |
+| -------------------------- | ---------------------------------------------------------------------------------------------- |
+| Web application            | [`apps/web`](apps/web)                                                                         |
+| API routes and schemas     | [`apps/api/app/api`](apps/api/app/api), [`apps/api/app/schemas`](apps/api/app/schemas)         |
+| Agent workflows and tools  | [`apps/api/app/workflows`](apps/api/app/workflows), [`apps/api/app/tools`](apps/api/app/tools) |
+| Data models and migrations | [`apps/api/app/models`](apps/api/app/models), [`apps/api/alembic`](apps/api/alembic)           |
+| Local services             | [`docker-compose.yml`](docker-compose.yml)                                                     |
+| Isolated integration tests | [`compose.test.yml`](compose.test.yml)                                                         |
+| Deployment template        | [`infrastructure/ecs-api-task.json`](infrastructure/ecs-api-task.json)                         |
+
+## Useful commands
+
+| Command                                                                                          | Purpose                                                             |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| `docker compose up --build -d`                                                                   | Build and start the application                                     |
+| `docker compose logs --tail=100 api worker`                                                      | Inspect API and worker logs                                         |
+| `docker compose stop`                                                                            | Stop services while preserving data                                 |
+| `docker compose start`                                                                           | Restart stopped services                                            |
+| `docker compose -f compose.test.yml up --build --abort-on-container-exit --exit-code-from tests` | Run backend integration tests against isolated PostgreSQL and Redis |
+| `npm ci --prefix apps/web`                                                                       | Install web dependencies                                            |
+| `npm run build --prefix apps/web`                                                                | Build the production web app                                        |
+| `npm run test:e2e --prefix apps/web`                                                             | Run the browser workflow test against the local demo stack          |
+
+## Security and privacy
+
+The API uses Argon2 password hashes, revocable sessions, CSRF protection, role checks, tenant-scoped data access, rate limits and audited writes. Uploads and credentials are excluded from Git. The demo provider is useful for local evaluation; a live OpenAI configuration sends prompts and retrieved context to the configured provider. Read [SECURITY.md](SECURITY.md) and [docs/privacy.md](docs/privacy.md) before connecting sensitive data or external services.
 
 ## Validation
 
-Backend integration tests use **real PostgreSQL/pgvector and Redis** in an isolated temporary stack:
+The backend suite runs against real PostgreSQL/pgvector and Redis in an isolated temporary stack. It covers tenant isolation, authentication, approval recovery, duplicate writes, concurrent bookings, document retrieval and citations. The browser test covers customer updates with approval, document ingestion, agent ticket creation, appointment booking, navigation, theme switching and mobile layout.
 
-```sh
+```powershell
 docker compose -f compose.test.yml up --build --abort-on-container-exit --exit-code-from tests
 docker compose -f compose.test.yml down
 ```
 
-For the browser suite, first start and seed the local demo stack. The test creates synthetic records in that stack; use a disposable demo organization.
+OpenAI mode requires a configured API key and separate live evaluation. Offline tests verify workflow and business invariants; they do not measure production model quality. Calendar-provider sync, email delivery, OCR, SSO, password reset and general scheduled automations are not implemented.
 
-```sh
-cd apps/web
-npm ci
-npx playwright install chromium
-npm run build
-npm run test:e2e
-```
-
-Backend checks cover cross-organization isolation, unauthorized tools, CSRF, duplicate writes, approval restarts/rejection/expiry/tampering/stale records/permission revocation, concurrent resumes, concurrent bookings, document deletion, citations and persistent chat effects. Browser checks cover the complete customer → approval → knowledge → ticket → booking flow, navigation, dark mode and mobile layouts. The screenshots show actual records created by that test, not fabricated chart data.
-
-OpenAI behavior requires a configured API key and a separate live evaluation. Offline tests verify orchestration and business invariants; they do not establish production model quality.
-
-## Development and documentation
-
-Python 3.12 and Node 22 are used in containers and CI. Exact compatible dependencies are committed in `apps/api/uv.lock` and `apps/web/package-lock.json`.
-
-```sh
-cd apps/api
-uv sync --frozen
-# Set DATABASE_URL and REDIS_URL to your local services when running outside Docker.
-uv run uvicorn app.main:app --reload --port 8000
-```
-
-In a second terminal, run `npm ci` and `npm run dev` from `apps/web`. Vite proxies `/api` to port 8000. On Windows, Docker is recommended if host application policies block native Python DLLs.
+## Documentation
 
 - [Architecture and design decisions](docs/architecture.md)
 - [API and streaming contract](docs/api.md)
-- [Permissions and security boundaries](SECURITY.md)
 - [Deployment and backup operations](docs/deployment.md)
 - [Privacy and retention](docs/privacy.md)
 - [Evaluation guide](evaluation/README.md)
 - [Contribution guide](CONTRIBUTING.md)
 
-Calendar-provider synchronization, email delivery, document OCR, SSO, password reset, an invitation-acceptance flow, general scheduled automations, resource-specific multi-calendar scheduling and an evaluations dashboard are not implemented. Their absence is explicit; there are no placeholder navigation screens claiming those features.
+## Ownership
 
-Licensed under [MIT](LICENSE).
+Built and maintained by [MDCran](https://github.com/MDCran). Licensed under [MIT](LICENSE).
