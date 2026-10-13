@@ -1,0 +1,65 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env: {POSTGRES_USER: operations, POSTGRES_PASSWORD: test-only-password, POSTGRES_DB: operations_test}
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U operations" --health-interval 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+    env:
+      DATABASE_URL: postgresql+psycopg://operations:test-only-password@localhost:5432/operations_test
+      REDIS_URL: redis://localhost:6379/0
+      AI_PROVIDER: demo
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with: {version: "0.10.9", python-version: "3.12"}
+      - run: uv sync --frozen
+      - run: uv run ruff check app tests alembic evaluation
+      - run: uv run ruff format --check app tests alembic evaluation
+      - run: uv run pytest -q
+      - run: uv run alembic check
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run: {working-directory: apps/web}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: "22", cache: npm, cache-dependency-path: apps/web/package-lock.json}
+      - run: npm ci
+      - run: npm run build
+      - run: npm audit --omit=dev --audit-level=high
+  end-to-end:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: "22"}
+      - run: cp .env.example .env
+      - run: docker compose up --build -d
+      - run: docker compose run --rm api uv run --no-sync python -m app.db.seed
+      - run: npm ci --prefix apps/web
+      - run: npx --prefix apps/web playwright install --with-deps chromium
+      - run: npm run test:e2e --prefix apps/web
+      - if: failure()
+        run: docker compose logs --tail=100
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with: {name: browser-traces, path: apps/web/test-results}
+      - if: always()
+        run: docker compose down

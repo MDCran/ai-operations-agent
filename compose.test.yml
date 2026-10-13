@@ -1,0 +1,24 @@
+name: ai-operations-agent-tests
+networks:
+  default:
+    ipam:
+      config: [{subnet: "${COMPOSE_TEST_SUBNET:-10.203.77.0/24}"}]
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment: {POSTGRES_USER: operations, POSTGRES_PASSWORD: test-only-password, POSTGRES_DB: operations_test}
+    healthcheck: {test: ["CMD-SHELL", "pg_isready -U operations -d operations_test"], interval: 2s, retries: 20}
+    tmpfs: /var/lib/postgresql/data
+  redis:
+    image: redis:7-alpine
+    healthcheck: {test: ["CMD", "redis-cli", "ping"], interval: 2s, retries: 20}
+  tests:
+    build: {context: apps/api, target: test}
+    environment:
+      DATABASE_URL: postgresql+psycopg://operations:test-only-password@postgres:5432/operations_test
+      REDIS_URL: redis://redis:6379/0
+      AI_PROVIDER: demo
+    command: ["uv", "run", "--no-sync", "pytest", "-q"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}

@@ -1,0 +1,27 @@
+[project]
+name = "ai-operations-agent-api"
+version = "0.1.0"
+description = "Tenant-scoped business tools and durable LangGraph workflows"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "fastapi>=0.115,<1", "uvicorn[standard]>=0.34,<1", "pydantic-settings>=2.7,<3",
+  "sqlalchemy>=2.0.38,<2.1", "alembic>=1.14,<2", "psycopg[binary,pool]>=3.2,<4",
+  "pgvector>=0.3,<1", "redis>=5,<7", "celery>=5.4,<6", "pwdlib[argon2]>=0.2,<1",
+  "python-multipart>=0.0.20,<1", "email-validator>=2,<3", "pypdf>=5,<7",
+  "python-docx>=1.1,<2", "langchain>=1,<2", "langchain-openai>=1,<2",
+  "langgraph>=1,<2", "langgraph-checkpoint-postgres>=3,<4"
+]
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "httpx>=0.28,<1", "ruff>=0.11,<1"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 110
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]

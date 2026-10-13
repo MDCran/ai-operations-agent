@@ -1,0 +1,67 @@
+name: ai-operations-agent
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: operations
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: operations
+    ports: ["127.0.0.1:55432:5432"]
+    volumes: ["postgres_data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U operations -d operations"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports: ["127.0.0.1:56379:6379"]
+    volumes: ["redis_data:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 15
+  migrate:
+    build: {context: apps/api, target: runtime}
+    env_file: .env
+    command: ["uv", "run", "--no-sync", "python", "-m", "app.db.initialize"]
+    depends_on:
+      postgres: {condition: service_healthy}
+  api:
+    build: {context: apps/api, target: runtime}
+    env_file: .env
+    command: ["uv", "run", "--no-sync", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
+    volumes: ["uploads:/app/uploads"]
+    ports: ["127.0.0.1:8000:8000"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "uv", "run", "--no-sync", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      retries: 10
+  worker:
+    build: {context: apps/api, target: runtime}
+    env_file: .env
+    command: ["uv", "run", "--no-sync", "celery", "-A", "app.workers.jobs", "worker", "--loglevel=warning", "--concurrency=2"]
+    volumes: ["uploads:/app/uploads"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+  scheduler:
+    build: {context: apps/api, target: runtime}
+    env_file: .env
+    command: ["uv", "run", "--no-sync", "celery", "-A", "app.workers.jobs", "beat", "--loglevel=warning", "--schedule=/tmp/celerybeat"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+  web:
+    build: {context: apps/web}
+    ports: ["127.0.0.1:8080:8080"]
+    depends_on:
+      api: {condition: service_healthy}
+volumes:
+  postgres_data:
+  redis_data:
+  uploads:

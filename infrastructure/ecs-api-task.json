@@ -1,0 +1,21 @@
+{
+  "family": "ai-operations-agent-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "${EXECUTION_ROLE_ARN}",
+  "taskRoleArn": "${TASK_ROLE_ARN}",
+  "containerDefinitions": [{
+    "name": "api",
+    "image": "${API_ECR_IMAGE}",
+    "essential": true,
+    "command": ["uv", "run", "--no-sync", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"],
+    "portMappings": [{"containerPort": 8000, "protocol": "tcp"}],
+    "environment": [{"name": "ENVIRONMENT", "value": "production"}, {"name": "AI_PROVIDER", "value": "openai"}, {"name": "ALLOWED_ORIGINS", "value": "${HTTPS_ORIGIN}"}],
+    "secrets": [{"name": "DATABASE_URL", "valueFrom": "${DATABASE_SECRET_ARN}"}, {"name": "REDIS_URL", "valueFrom": "${REDIS_SECRET_ARN}"}, {"name": "OPENAI_API_KEY", "valueFrom": "${OPENAI_SECRET_ARN}"}],
+    "mountPoints": [{"sourceVolume": "uploads", "containerPath": "/app/uploads", "readOnly": false}],
+    "logConfiguration": {"logDriver": "awslogs", "options": {"awslogs-group": "/ai-operations-agent/api", "awslogs-region": "${AWS_REGION}", "awslogs-stream-prefix": "ecs"}}
+  }],
+  "volumes": [{"name": "uploads", "efsVolumeConfiguration": {"fileSystemId": "${UPLOADS_EFS_ID}", "transitEncryption": "ENABLED", "authorizationConfig": {"accessPointId": "${UPLOADS_ACCESS_POINT_ID}", "iam": "ENABLED"}}}]
+}
